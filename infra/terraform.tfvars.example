@@ -1,0 +1,27 @@
+# Скопируйте этот файл в terraform.tfvars и заполните своими значениями
+serv_config = {
+  "data_serv" = {
+    vm_name   = "data_serv"
+    vm_desc   = "NFS/Minio serv"
+    vm_cpu    = 2
+    ram       = 2
+    disk      = 20
+    disk_name = "ubuntu-2204-lts"
+    template  = "fd83m7rp3r4l12c2keph"
+    zone      = "ru-central1-d"
+  }
+  "client"    = {
+    vm_name   = "client"
+    vm_desc   = "vm client"
+    vm_cpu    = 2
+    ram       = 2
+    disk      = 20
+    disk_name = "ubuntu-2204-lts"
+    template  = "fd83m7rp3r4l12c2keph"
+    zone      = "ru-central1-d"
+  }
+}
+
+cloud_id = # свои значения
+folder_id = # свои значения
+ssh_public_key = # свой ключ
