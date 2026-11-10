@@ -1,0 +1,9 @@
+- name: Configure nfs-kernel-server
+  hosts: nfs_serv
+  become: yes
+  roles: [nfs_server]
+
+- name: Configure nfs_client
+  hosts: nfs_client
+  become: yes
+  roles: [nfs_client]
