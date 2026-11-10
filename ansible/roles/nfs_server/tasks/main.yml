@@ -1,0 +1,30 @@
+- name: Update package
+  apt:
+    update_cache: yes
+- name: Upgrade package
+  apt:
+    upgrade: safe
+    autoremove: yes
+
+- name: Install required package
+  apt:
+    name:
+    - nfs-kernel-server
+
+- name: build directory
+  ansible.builtin.file:
+    path: "{{ nfs_share_dir }}"
+    state: directory
+    mode: '0777'
+
+- name: Copy configuration template
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+  notify: restart nfs
+
+- name: Start and enabled nfs-kernel-server
+  systemd:
+    name: nfs-kernel-server
+    state: started
+    enabled: yes
