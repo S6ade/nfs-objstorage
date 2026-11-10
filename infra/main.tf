@@ -86,6 +86,12 @@ resource "yandex_vpc_security_group" "sg_vm" {
     v4_cidr_blocks = ["0.0.0.0/0"]
     port           = 2049
   }
+  ingress {
+  protocol       = "TCP"
+  description    = "MinIO Console"
+  v4_cidr_blocks = ["0.0.0.0/0"]
+  port           = 9001
+}
   egress {
     protocol       = "ANY"
     description    = "outgoing"

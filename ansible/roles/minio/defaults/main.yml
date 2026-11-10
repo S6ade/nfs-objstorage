@@ -1,0 +1,18 @@
+# Пути
+minio_dir: /media/minio
+# Пользовтаели и группы
+minio_user: "minio_user"
+minio_group: "minio_group"
+#Admin
+minio_root_user: "minio_admin"
+minio_root_password: "{{ vault_minio_root_password }}"
+# Порты
+minio_server_port: "9000"
+minio_console_port: "9001"
+minio_redirect_url: "http://153.51.165.13"
+# Клиент
+minio_client_user: "minio-client-student"
+minio_client_password: "{{ vault_minio_client_password }}"
+# Бакет
+minio_bucket_name: "minio-practice"
+minio_policy_name: "minio-practice-policy"

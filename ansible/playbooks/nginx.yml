@@ -1,0 +1,5 @@
+- name: Config nginx proxy
+  hosts: nfs_client
+  become: yes
+  roles:
+    - nginx_proxy

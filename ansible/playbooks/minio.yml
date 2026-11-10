@@ -1,0 +1,5 @@
+- name: Config Minio
+  hosts: data_serv
+  become: yes
+  roles:
+    - minio
