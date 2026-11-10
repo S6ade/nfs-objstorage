@@ -1,0 +1,112 @@
+---
+- name: Load Vault secrets
+  ansible.builtin.include_vars:
+    file: vault.yml
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Create group 'minio_group'
+  ansible.builtin.group:
+    name: "{{ minio_group }}"
+    state: present
+
+- name: Create user 'minio_user'
+  ansible.builtin.user:
+    name: "{{ minio_user }}"
+    group: "{{ minio_group }}"
+    state: present
+    shell: /sbin/nologin
+    system: yes
+
+- name: Create directory for MinIO data
+  ansible.builtin.file:
+    path: "{{ minio_dir }}"
+    state: directory
+    owner: "{{ minio_user }}"
+    group: "{{ minio_group }}"
+    mode: "0755"
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: docker.io
+    state: present
+
+- name: Run MinIO container
+  community.docker.docker_container:
+    name: minio
+    image: pgsty/silo:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ minio_server_port }}:9000"
+      - "{{ minio_console_port }}:9001"
+    volumes:
+      - "{{ minio_dir }}:/data"
+    env:
+      MINIO_ROOT_USER: "{{ minio_root_user }}"
+      MINIO_ROOT_PASSWORD: "{{ minio_root_password }}"
+      MINIO_BROWSER_REDIRECT_URL: "{{ minio_redirect_url }}"
+      MINIO_SERVER_URL: "http://153.51.165.16:9000"
+    command: server /data --console-address ":9001"
+
+- name: Install MinIO Client (mc)
+  ansible.builtin.get_url:
+    url: "https://github.com/minio/mc/releases/download/RELEASE.2025-08-13T08-35-41Z/mc.linux-amd64.RELEASE.2025-08-13T08-35-41Z"
+    dest: /usr/local/bin/mc
+    mode: '0755'
+
+- name: Configure mc alias
+  ansible.builtin.shell:
+    cmd: 'mc alias set local http://localhost:9000 "{{ minio_root_user }}" "{{ minio_root_password }}"'
+  changed_when: false
+
+- name: Create MinIO client user
+  ansible.builtin.shell:
+    cmd: mc admin user add local "{{ minio_client_user }}" "{{ minio_client_password }}"
+  changed_when: false
+
+- name: Create bucket
+  ansible.builtin.command:
+    cmd: mc mb local/suito --ignore-existing
+  tags:
+    - create_bucket
+
+- name: Make bucket public
+  ansible.builtin.command:
+    cmd: mc anonymous set download local/suito
+  changed_when: false
+
+- name: Create bucket for static content
+  ansible.builtin.command:
+    cmd: mc mb local/suito --ignore-existing
+
+- name: Create index.html file
+  ansible.builtin.copy:
+    content: "<html><body><h1>Hello World!</h1></body></html>"
+    dest: /tmp/index.html
+
+- name: Upload index.html to MinIO
+  ansible.builtin.command:
+    cmd: mc cp /tmp/index.html local/suito/static/index.html
+
+- name: Set bucket policy for client
+  ansible.builtin.shell:
+    cmd: mc admin policy attach local readwrite --user "{{ minio_client_user }}"
+
+- name: Create test file and upload to bucket
+  ansible.builtin.shell:
+    cmd: |
+      echo "Hello from MinIO" > /tmp/minio-practice
+      mc cp /tmp/minio-practice local/{{ minio_bucket_name }}/
+
+- name: Create index.html
+  ansible.builtin.copy:
+    content: "<html><body><h1>Hello World!</h1></body></html>"
+    dest: /tmp/index.html
+
+- name: Upload index.html to bucket
+  ansible.builtin.command:
+    cmd: mc cp /tmp/index.html local/suito/index.html
